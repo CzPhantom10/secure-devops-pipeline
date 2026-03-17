@@ -25,3 +25,13 @@ jobs:
 
       - name: Test Flask Installation
         run: python -c "import flask; print('Flask is working')"
+
+      - name: Secret Detection
+        run: |
+          echo "Scanning for hardcoded secrets..."
+          if grep -r -i "API_KEY" app.py; then
+            echo "Secret detected!"
+            exit 1
+          else
+            echo "No secrets found"
+          fi
