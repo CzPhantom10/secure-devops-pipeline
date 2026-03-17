@@ -23,5 +23,13 @@ steps:
   - name: Install Dependencies
     run: pip install -r requirements.txt
 
+  - name: Secret Detection
+    run: |
+      if grep -r -i "password" .; then
+        echo "❌ Hardcoded password found!"
+        exit 1
+      fi
+
+
   - name: Test Flask Import
     run: python -c "import flask; print('Flask OK')"
