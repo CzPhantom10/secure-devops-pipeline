@@ -10,7 +10,6 @@ app = Flask(__name__)
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 GITHUB_REPO = "CzPhantom10/secure-devops-pipeline"
 API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/actions/runs"
-API_KEY = "12345"
 
 # Set up headers for GitHub API
 HEADERS = {
@@ -54,6 +53,44 @@ def fetch_workflow_runs():
         }
 
 
+def calculate_security_score(conclusion):
+    """
+    Calculate security score based on pipeline status
+    Returns: dict with score and color
+    """
+    if conclusion == "success":
+        return {"score": 100, "color": "success"}
+    elif conclusion == "failure":
+        return {"score": 50, "color": "danger"}
+    elif conclusion == "cancelled":
+        return {"score": 60, "color": "warning"}
+    else:  # in_progress
+        return {"score": 75, "color": "info"}
+
+
+def extract_failure_reason(run_data):
+    """
+    Extract failure reason from workflow run data
+    Returns: failure reason string or default message
+    """
+    conclusion = run_data.get("conclusion", "")
+    
+    if conclusion == "failure":
+        # Try to get detailed reason from run status
+        name = run_data.get("name", "")
+        head_branch = run_data.get("head_branch", "")
+        
+        # Return a descriptive failure message
+        if "security" in name.lower() or "scan" in name.lower():
+            return "Security scan detected vulnerabilities in the pipeline"
+        elif "test" in name.lower():
+            return "Test suite failed - code quality check did not pass"
+        else:
+            return "Hardcoded secret detected by security scanner"
+    
+    return None
+
+
 def format_datetime(iso_string):
     """Convert ISO 8601 datetime to readable format"""
     try:
@@ -84,6 +121,26 @@ def dashboard():
     runs = data.get("runs", [])
     error = data.get("error")
     
+    # Calculate security score and get alert info from latest run
+    security_score = None
+    alert_type = None
+    alert_message = None
+    failure_reason = None
+    
+    if latest_run:
+        conclusion = latest_run.get("conclusion", "in_progress")
+        score_info = calculate_security_score(conclusion)
+        security_score = score_info
+        
+        # Determine alert type and message
+        if conclusion == "success":
+            alert_type = "success"
+            alert_message = "✅ All Systems Secure"
+        elif conclusion == "failure":
+            alert_type = "danger"
+            alert_message = "🚨 SECURITY ALERT: Pipeline Failed"
+            failure_reason = extract_failure_reason(latest_run)
+    
     # Process runs for display
     processed_runs = []
     for run in runs:
@@ -111,7 +168,11 @@ def dashboard():
         latest=latest_info,
         runs=processed_runs,
         error=error,
-        repo=GITHUB_REPO
+        repo=GITHUB_REPO,
+        security_score=security_score,
+        alert_type=alert_type,
+        alert_message=alert_message,
+        failure_reason=failure_reason
     )
 
 
@@ -126,8 +187,26 @@ def refresh_data():
     latest_run = data.get("latest")
     runs = data.get("runs", [])
     
+    security_score = None
+    alert_type = None
+    alert_message = None
+    failure_reason = None
+    
     latest_info = None
     if latest_run:
+        conclusion = latest_run.get("conclusion", "in_progress")
+        score_info = calculate_security_score(conclusion)
+        security_score = score_info
+        
+        # Determine alert type and message
+        if conclusion == "success":
+            alert_type = "success"
+            alert_message = "✅ All Systems Secure"
+        elif conclusion == "failure":
+            alert_type = "danger"
+            alert_message = "🚨 SECURITY ALERT: Pipeline Failed"
+            failure_reason = extract_failure_reason(latest_run)
+        
         latest_info = {
             "name": latest_run.get("name", "Unknown"),
             "status": latest_run.get("conclusion", "in_progress"),
@@ -146,7 +225,11 @@ def refresh_data():
     
     return jsonify({
         "latest": latest_info,
-        "runs": runs_list
+        "runs": runs_list,
+        "security_score": security_score,
+        "alert_type": alert_type,
+        "alert_message": alert_message,
+        "failure_reason": failure_reason
     })
 
 
