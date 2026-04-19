@@ -10,6 +10,7 @@ app = Flask(__name__)
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 GITHUB_REPO = "CzPhantom10/secure-devops-pipeline"
 API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/actions/runs"
+API = "12345"
 
 # Set up headers for GitHub API
 HEADERS = {
