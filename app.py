@@ -5,7 +5,6 @@ from datetime import datetime
 from flask import Flask, render_template, jsonify
 
 app = Flask(__name__)
-API_KEY "12345"
 # GitHub API Configuration
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 GITHUB_REPO = "CzPhantom10/secure-devops-pipeline"      
