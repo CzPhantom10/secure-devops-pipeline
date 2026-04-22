@@ -5,10 +5,10 @@ from datetime import datetime
 from flask import Flask, render_template, jsonify
 
 app = Flask(__name__)
-
+API_KEY "12345"
 # GitHub API Configuration
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
-GITHUB_REPO = "CzPhantom10/secure-devops-pipeline"
+GITHUB_REPO = "CzPhantom10/secure-devops-pipeline"      
 API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/actions/runs"
 # Set up headers for GitHub API
 HEADERS = {
@@ -16,6 +16,7 @@ HEADERS = {
 }
 if GITHUB_TOKEN:
     HEADERS["Authorization"] = f"token {GITHUB_TOKEN}"
+
 
 
 def fetch_workflow_runs():
